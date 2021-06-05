@@ -121,7 +121,7 @@ def simple_import_data(data_path):
     vec = [x[-1] for x in raw_data]
     vec_matrix = np.asarray(vec)
 
-    word_vec_dict = load_vectors("/home/houzhenyuoo/glove.6B/glove.6B.100d.txt")
+    word_vec_dict = load_vectors("./glove.6B/glove.6B.100d.txt")
 
 
 def re_sort_with_color(data, color=None):

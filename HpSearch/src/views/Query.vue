@@ -60,15 +60,20 @@ export default {
     }
   },
   methods: {
-    getdata: function () {
+    flushdata: function () {
+      this.group = 0,
+      this.imgsArr = []
+    },
+    getdata: function (id) {
       var res = {
         data: {
-          'src': 'http://127.0.0.1:8081/data/' + (++this.group) + '.jpg',
+          'src': 'http://127.0.0.1:8081/data/' + id + '.jpg',
           // 'src': 'static/pictures/' + (++this.group) + '.jpg',
           'herf': ''
         }
       }
-      console.log(res.data)
+      // console.log(res.data)
+      this.group++
       this.imgsArr = this.imgsArr.concat(res.data)
     },
     // 1.返回主页
@@ -156,12 +161,19 @@ export default {
         this.loadingVisible = true
         postQuery(query).then(
           Response => {
-            if (Response.status === 200 && Response.data.code === 200) {
-              store.set_answer_list(data_to_answerlist(Response.data.data.data))
-              store.set_query(query)
-              this.query_tips(0, 0, MES_SUCC, 'AnonymousQuery已为您找到' + this.state.answer_list.length + '条答案')
-              this.currentpage = 1
-              this.update_answerlist(1)
+            console.log(Response)
+            if (Response.status === 200) {
+              console.log(Response.data);
+              console.log(Response.data.length);
+              // store.set_answer_list(data_to_answerlist(Response.data.data.data))
+              // store.set_query(query)
+              this.flushdata()
+              for(var i = 0;i < Response.data.length;i++){
+                this.getdata(Response.data[i])
+              }
+              this.query_tips(0, 0, MES_SUCC, 'AnonymousQuery已为您找到' + Response.data.length + '张图片')
+              // this.currentpage = 1
+              // this.update_answerlist(1)
               this.loadingVisible = false
             } else {
               this.query_tips(500, 500, MES_ERROR, '未知错误')
@@ -176,7 +188,7 @@ export default {
     }
   },
   created: function () {
-    this.getdata()
+    // this.getdata()
     this.update_answerlist(1)
     let that = this
     document.onkeyup = function (e) {

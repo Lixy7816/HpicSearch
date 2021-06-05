@@ -36,8 +36,7 @@ export function changePW (_username, _password, _new_password) {
 export function postQuery (_query) {
   return axios.post(API.POST_QUERY.path, {
     query: _query,
-    color: '',
-    topk: '50'
+    topk: 50
   })
 }
 
