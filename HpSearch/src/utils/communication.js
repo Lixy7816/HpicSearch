@@ -33,11 +33,11 @@ export function changePW (_username, _password, _new_password) {
 }
 
 // 查询答案
-export function postQuery (query) {
-  return axios.get(API.POST_QUERY.path, {
-    params: {
-      q: query
-    }
+export function postQuery (_query) {
+  return axios.post(API.POST_QUERY.path, {
+    query: _query,
+    color: '',
+    topk: '50'
   })
 }
 

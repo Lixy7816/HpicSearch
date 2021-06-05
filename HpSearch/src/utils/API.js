@@ -20,8 +20,8 @@ const API = {
     method: 'post'
   },
   POST_QUERY: {
-    path: '/docmanager/query',
-    method: 'get'
+    path: 'query',
+    method: 'post'
   },
   DELETE_FILE: {
     path: '/docmanager/delete',

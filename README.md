@@ -25,4 +25,3 @@ node server.js
 cd backend
 python web.py
 ```
-
