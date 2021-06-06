@@ -36,13 +36,8 @@
 import Querybar from "@/components/QueryBar.vue";
 import { postQuery } from "@/utils/communication";
 import { store } from "@/store/AnswerlistStore";
-import {
-  data_to_answerlist,
-  data_to_historylist,
-  get_token
-} from "@/utils/DataProcess";
+import { data_to_answerlist } from "@/utils/DataProcess";
 import { hstore } from "@/store/HistoryStore";
-import { localStore } from "@/store/StorageLocal";
 
 var QUERY = 0;
 var USER = 1;
@@ -64,55 +59,11 @@ export default {
       loadingVisible: false,
       userConnectVisible: false,
       ustate: ustore.state,
-      dialogVisible_logout: false,
-      lock_: false
+      dialogVisible_logout: false
     };
   },
   methods: {
-    // 1.错误处理函数,query_or_user表示应该显示搜索加载动画还是用户加载动画
-    error_handle: function(error, query_or_user) {
-      var respnose = error.response;
-      if (
-        typeof respnose === "undefined" ||
-        typeof respnose.status === "undefined"
-      ) {
-        // 1.1 未知错误1
-        if (query_or_user === QUERY) {
-          this.query_tips(500, 500, MES_ERROR, UNKNOWN_ERROR_INFO);
-        } else if (query_or_user === USER) {
-          this.user_tips(500, 500, MES_ERROR, UNKNOWN_ERROR_INFO);
-        }
-      } else if (respnose.status === 400) {
-        // 1.2 通用错误信息
-        var data = respnose.data.data;
-        if (query_or_user === QUERY) {
-          this.query_tips(0, 0, MES_ERROR, data);
-        } else if (query_or_user === USER) {
-          this.user_tips(0, 0, MES_ERROR, data);
-        }
-      } else if (respnose.status === 401) {
-        // 1.3 用户未登录或登录过期问题
-        if (query_or_user === QUERY) {
-          this.query_tips(0, 0, MES_ERROR, USER_ERROR_INFO);
-        } else if (query_or_user === USER) {
-          this.user_tips(0, 0, MES_ERROR, USER_ERROR_INFO);
-        }
-        // 后端反馈登录状态过期,则前端需清除用户相关信息
-        ustore.set_online(false);
-        ustore.set_manager(false);
-        ustore.set_user("请登录");
-        this.DialogVisible = 0;
-        localStore.remove_json("userinfo");
-      } else {
-        // 1.4 未知错误信息2
-        if (query_or_user === QUERY) {
-          this.query_tips(400, 400, MES_ERROR, UNKNOWN_ERROR_INFO);
-        } else if (query_or_user === USER) {
-          this.user_tips(400, 400, MES_ERROR, UNKNOWN_ERROR_INFO);
-        }
-      }
-    },
-    // 2.通用提示信息
+    // 1.通用提示信息
     tips: function(wait_time, message_type, _message) {
       this.timer = setTimeout(() => {
         if (message_type === MES_ERROR) {
@@ -142,34 +93,27 @@ export default {
         }
       }, wait_time);
     },
-    // 3.用户相关提示信息(会有用户加载动画)
-    user_tips: function(wait_time, wait_time2, message_type, _message) {
-      this.timer = setTimeout(() => {
-        this.userConnectVisible = false;
-      }, wait_time);
-      this.tips(wait_time2, message_type, _message);
-    },
-    // 4.搜索相关提示信息(会有搜索加载动画)
+    // 2.搜索相关提示信息(会有搜索加载动画)
     query_tips: function(wait_time, wait_time2, message_type, _message) {
       this.timer = setTimeout(() => {
         this.loadingVisible = false;
       }, wait_time);
       this.tips(wait_time2, message_type, _message);
     },
-    // 5.搜索
+    // 3.搜索
     search: function() {
       var query = this.$refs["querybar"].ret_query();
+      var color = this.$refs['querybar'].ret_color();
       hstore.add_history(query);
       if (query === "") {
         this.query_tips(0, 0, MES_INFO, "输入不能为空!");
-        this.lock_ = false;
         return;
       }
       this.loadingVisible = true;
-      postQuery(query).then(
+      postQuery(query,color).then(
         Response => {
           if (Response.status === 200) {
-            store.set_answer_list(data_to_answerlist(Response.data));
+            store.set_answer_list(Response.data);
             store.set_query(query);
             this.query_tips(
               0,
@@ -187,7 +131,7 @@ export default {
           }
         },
         error => {
-          this.error_handle(error, QUERY);
+          this.query_tips(500, 500, MES_ERROR, "未知错误");
         }
       );
     }
@@ -197,9 +141,7 @@ export default {
     document.onkeyup = function(e) {
       e = window.event || e;
       if (e.keyCode === 13) {
-        if (that.DialogVisible === 0) {
-          that.search();
-        }
+        that.search();
       }
     };
   }

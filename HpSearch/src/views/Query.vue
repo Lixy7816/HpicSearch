@@ -9,13 +9,17 @@
       <div style="color:white;font-size:15px;">Querying...</div>
     </el-row>
     <div id="ans_pics">
+      <el-image-viewer v-if="showViewer" :on-close="closeViewer" :url-list="viewerImgList"/>
       <vue-waterfall-easy :imgsArr='imgsArr'
                     :gap="20"
-                    :height="800"
+                    :height="700"
                     :loadingDotCount='0'
-                    :imgWidth='180'>
+                    :imgWidth='180'
+                    :ref="waterfall"
+                    @click="clickFn"
+                    @scrollReachBottom="moreData">
         <div slot-scope="props">
-            <p v-html="props.value.info"></p>
+          <p v-html="props.value.info"></p>
         </div>
       </vue-waterfall-easy>
     </div>
@@ -34,24 +38,68 @@ var UNKNOWN_ERROR_INFO = '发生未知异常,请检查网络连接或联系作�
 var MES_INFO = 0
 var MES_ERROR = 1
 var MES_SUCC = 2
-
+var LOAD_PIC_NUM = 15
 export default {
   name: 'Query',
   components: {
     vueWaterfallEasy,
-    QueryBar
+    QueryBar,
+    'el-image-viewer': () => import('element-ui/packages/image/src/image-viewer')
   },
   data () {
     return {
       _query: store.query,
+      showViewer: false,
       answerlist: [],
+      viewerImgList:[],
+      picChoose: 0,
       loadingVisible: false,
-      lock: false,
       imgsArr: [],
-      group: 0 // request param
+      group: 0
     }
   },
   methods: {
+    onPreview() {
+      this.showViewer = true
+    },
+    // 关闭查看器
+    closeViewer() {
+      this.showViewer = false
+    },
+    moreData() {
+      // 一次加载LOAD_PIC_NUM张图片
+      if(this.group >= store.answer_list.length) return
+      var loadPicNum = this.group + LOAD_PIC_NUM<= store.answer_list.length ? LOAD_PIC_NUM : store.answer_list.length - this.group;
+      for(var i = 0;i < loadPicNum;i++){
+        this.getdata(store.answer_list[i + this.group])
+      }
+      this.group += loadPicNum
+      if(this.group >= store.answer_list.length){
+        this.query_tips(0,0,MES_INFO,'没有更多结果了')
+      }
+    },
+    initData(num) {
+      // 一次加载num张图片
+      var loadPicNum = this.group + num<= store.answer_list.length ? num : store.answer_list.length - this.group;
+      for(var i = 0;i < loadPicNum;i++){
+        this.getdata(store.answer_list[i + this.group])
+      }
+      this.group += loadPicNum
+    },
+    clickFn(event, { index, value }) {
+      // 走马灯展示图片
+      if (event.target.tagName.toLowerCase() == 'img') {
+        console.log('img clicked', index, value)
+        this.picChoose = index
+        this.onPreview()
+        let tempImgList = [...this.answerlist];
+	      let temp = [];
+	      for (let i = 0; i < index; i++) {
+		      temp.push(tempImgList.shift());
+	      }
+	      this.viewerImgList = tempImgList.concat(temp);
+      }
+    },
     flushdata: function () {
       this.group = 0,
       this.imgsArr = []
@@ -63,7 +111,6 @@ export default {
           'herf': ''
         }
       }
-      this.group++
       this.imgsArr = this.imgsArr.concat(res.data)
     },
     // 1.返回主页
@@ -71,7 +118,7 @@ export default {
       this.flushdata()
       this.$router.go(-1)
     },
-    // 3.搜索相关提示信息(会有搜索加载动画)
+    // 2.提示信息(会有搜索加载动画)
     query_tips: function (wait_time, wait_time2, message_type, _message) {
       this.timer = setTimeout(() => {
         this.loadingVisible = false
@@ -86,7 +133,7 @@ export default {
             message: _message
           })
         } else if (message_type === MES_SUCC) {
-          this.$notify.info({
+          this.$notify.success({
             position: 'top-left',
             title: '提示',
             offset: 100,
@@ -94,7 +141,7 @@ export default {
             message: _message
           })
         } else if (message_type === MES_ERROR) {
-          this.$notify.success({
+          this.$notify.error({
             position: 'top-left',
             title: '错误提示',
             offset: 100,
@@ -104,56 +151,43 @@ export default {
         }
       }, wait_time2)
     },
-    // 5.错误处理函数
-    error_handle: function (error) {
-      var respnose = error.response
-      this.query_tips(500, 500, MES_ERROR, UNKNOWN_ERROR_INFO)
-    },
-    // 6.搜索函数
+    // 3.搜索函数
     queryAgain: function () {
-      if (this.lock === false) {
-        this.lock = true
         var query = this.$refs['querybar'].ret_query()
+        var color = this.$refs['querybar'].ret_color()
         hstore.add_history(query)
         if (query === '') {
-          this.query_tips(0, 0, MES_INFO, '问题不能为空!')
-          this.lock = false
+          this.query_tips(0, 0, MES_INFO, '输入不能为空!')
           return
         }
         this.loadingVisible = true
-        postQuery(query).then(
+        postQuery(query,color).then(
           Response => {
-            console.log(Response)
             if (Response.status === 200) {
-              store.set_answer_list(data_to_answerlist(Response.data))
+              store.set_answer_list(Response.data)
               store.set_query(query)
+              this.answerlist = data_to_answerlist(store.answer_list)
+              print(this.answerlist)
               console.log(this.imgsArr)
               this.flushdata()
-              for(var i = 0;i < store.answer_list.length;i++){
-                this.getdata(store.answer_list[i])
-              }
+              this.initData(50)
               this.query_tips(0, 0, MES_SUCC, '侯哥搜图已为您找到' + Response.data.length + '张图片')
               this.loadingVisible = false
             } else {
               this.query_tips(500, 500, MES_ERROR, '未知错误')
             }
-            this.lock = false
           },
           error => {
-            this.error_handle(error)
-            this.lock = false
+            var respnose = error.response
+            this.query_tips(500, 500, MES_ERROR, UNKNOWN_ERROR_INFO)
           })
-      }
+
     }
   },
   created: function () {
-    console.log('create');
     this.flushdata()
-    for(var i = 0;i < store.answer_list.length;i++){
-      this.getdata(store.answer_list[i])
-    }
-    console.log(store.answer_list)
-    console.log(this.imgsArr)
+    this.initData(50)
+    this.answerlist = data_to_answerlist(store.answer_list)
     let that = this
     document.onkeyup = function (e) {
       e = window.event || e
