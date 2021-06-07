@@ -10,32 +10,6 @@ Vue.use(ElementUI)
 
 Vue.config.productionTip = false
 
-// 注册指令
-Vue.directive('highlight', {
-  bind (el, binding, vnode) {
-    const {
-      value
-    } = binding
-    if (value && typeof value === 'object') {
-      const {hWord, word} = value
-      el.innerHTML = word.replace(new RegExp(hWord, 'ig'), (a) => {
-        return `<b class = "highlight_text">${a}</b>`
-      })
-    }
-  },
-  // 绑定的数据更新了，执行 update
-  update (el, binding, vnode) {
-    const {
-      value
-    } = binding
-    if (value && typeof value === 'object') {
-      const {hWord, word} = value
-      el.innerHTML = word.replace(new RegExp(hWord, 'ig'),
-        (a) => `<b class = "highlight_text">${a}</b>`)
-    }
-  }
-})
-
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

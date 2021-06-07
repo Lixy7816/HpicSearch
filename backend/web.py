@@ -17,8 +17,8 @@ def index():
     query = request.json
     query_text = query["query"]
     color = query.get("color", None)
-    print(color)
     topk = query.get("topk", 40)
+    print(query_text,color,topk)
     result = simple_backend(query_text, topk=topk, color=color)
     return jsonify(result)
 

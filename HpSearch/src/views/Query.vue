@@ -1,7 +1,7 @@
 <template slot="item" slot-scope="props">
   <div id="query">
     <div style="margin: 40px 0;"></div>
-    <el-page-header @back="back" content="图片查询" class="backhome">
+    <el-page-header @back="back" content="图片搜索" class="backhome">
     </el-page-header>
     <QueryBar ref="querybar" v-on:search = 'queryAgain' v-bind:initquery = "_query" class="bar"/>
     <el-row v-if="loadingVisible">
@@ -18,9 +18,6 @@
                     :ref="waterfall"
                     @click="clickFn"
                     @scrollReachBottom="moreData">
-        <div slot-scope="props">
-          <p v-html="props.value.info"></p>
-        </div>
       </vue-waterfall-easy>
     </div>
   </div>
@@ -87,17 +84,16 @@ export default {
       this.group += loadPicNum
     },
     clickFn(event, { index, value }) {
-      // 走马灯展示图片
+      // 点击大图展示
       if (event.target.tagName.toLowerCase() == 'img') {
-        console.log('img clicked', index, value)
         this.picChoose = index
-        this.onPreview()
         let tempImgList = [...this.answerlist];
 	      let temp = [];
 	      for (let i = 0; i < index; i++) {
 		      temp.push(tempImgList.shift());
 	      }
 	      this.viewerImgList = tempImgList.concat(temp);
+        this.onPreview()
       }
     },
     flushdata: function () {
@@ -167,11 +163,9 @@ export default {
               store.set_answer_list(Response.data)
               store.set_query(query)
               this.answerlist = data_to_answerlist(store.answer_list)
-              print(this.answerlist)
-              console.log(this.imgsArr)
               this.flushdata()
               this.initData(50)
-              this.query_tips(0, 0, MES_SUCC, '侯哥搜图已为您找到' + Response.data.length + '张图片')
+              this.query_tips(0, 0, MES_SUCC, 'HpicSearch已为您找到' + Response.data.length + '张图片')
               this.loadingVisible = false
             } else {
               this.query_tips(500, 500, MES_ERROR, '未知错误')
@@ -188,6 +182,7 @@ export default {
     this.flushdata()
     this.initData(50)
     this.answerlist = data_to_answerlist(store.answer_list)
+    console.log(store.query);
     let that = this
     document.onkeyup = function (e) {
       e = window.event || e

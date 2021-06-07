@@ -5,26 +5,12 @@ export var hstore = {
     history_list: [],
     max_size: 10,
     max_store: 10,
-
-    user_history: [],
-    page_size: 5
   },
-  // 设置用户历史记录
-  set_user_history (data) {
-    this.state.user_history = data
-  },
-  get_slice (page_id) {
-    return this.state.user_history.slice((page_id - 1) * this.state.page_size, page_id * this.state.page_size)
-  },
-  get_pagenub () {
-    return Math.ceil(this.state.user_history.length / this.state.page_size)
-  },
-  set_pagesize (newValue) {
-    this.state.page_size = newValue
-  },
-  // 设置整个历史记录表
-  setlist (data) {
-    this.state.history_list = data
+  loadHistory () {
+    var historys = localStore.get_json('history')
+    if (typeof (historys.data) !== 'undefined') {
+      this.state.history_list = historys.data
+    }
   },
   // 添加一条历史记录
   add_history (newValue) {
