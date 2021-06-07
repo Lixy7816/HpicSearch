@@ -7,13 +7,13 @@ export function postQuery(_query, _color) {
   if (_color == "A" || _color == '') {
     return axios.post(API.POST_QUERY.path, {
       query: _query,
-      topk: 100
+      topk: 150
     });
   } else {
     return axios.post(API.POST_QUERY.path, {
       query: _query,
       color: _color,
-      topk: 100
+      topk: 150
     });
   }
 }

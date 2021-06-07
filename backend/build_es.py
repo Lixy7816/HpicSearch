@@ -142,8 +142,15 @@ def simple_backend(query, topk=50, color=None):
     query_vec = np.array([query2vec(query)]).transpose()
     sim_score = np.matmul(vec_matrix, query_vec).flatten()
     order = np.argsort(sim_score)
-    order = order[-topk:][::-1]
     
+    # 相对于最大分数做截断
+    max_score = sim_score[order[-1]]
+    new_order = []
+    for i in order:
+        if(sim_score[i] > max_score * 0.8 or sim_score[i] > 25):
+            new_order.append(i)
+
+    order = new_order[-topk:][::-1]
     result = [raw_data[i] for i in order]
     result = re_sort_with_color(result, color)
     labels = [x[1] for x in result]

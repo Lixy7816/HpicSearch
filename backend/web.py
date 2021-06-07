@@ -15,7 +15,7 @@ def test_index():
 @app.route("/query", methods=["POST", "GET"])
 def index():
     query = request.json
-    query_text = query["query"]
+    query_text = query["query"].lower()
     color = query.get("color", None)
     topk = query.get("topk", 40)
     print(query_text,color,topk)
